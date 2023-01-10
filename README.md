@@ -1,3 +1,37 @@
+# FORK DISCLAIMER
+
+" This repository is a fork from original [repository](https://github.com/jnjaby/DISCNet).
+
+Maintained by Chanwoo Park at Seoul National University, Thunder Research Group
+
+## Getting Started
+
+### Dependencies
+
+We support conda for package manager for dependency resolution. Installation using `pip` is not supported.
+
+1) Adding `conda-forge` channel for installation
+
+```bash
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+```
+
+2) Creating virtual environment using conda
+
+```bash
+conda create -n <your_venv_name> python=3.10
+```
+
+3) Installing dependencies using updated `conda-requirements.txt`.
+```bash
+conda install --file conda-requirements.txt
+```
+
+# Original Readme
+
+" Below here is original README.md of the repository
+
 # DISCNet 
 
 ![Python 3.7](https://img.shields.io/badge/python-3.7-green.svg?style=plastic)
