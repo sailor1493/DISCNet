@@ -12,3 +12,4 @@ tensorboard
 pytorch>=1.3
 torchvision
 yapf
+tqdm
