@@ -3,8 +3,6 @@
 #### Library imports
 import torch
 from utils import torch_fft
-from IPython.core import debugger
-breakpoint = debugger.set_trace
 
 #### Local imports
 

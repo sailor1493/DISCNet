@@ -3,7 +3,6 @@ import sys
 import argparse
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import torch
 from tqdm import tqdm
 
@@ -86,7 +85,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    device = torch.device(args.device if (torch.cuda.is_available() and args.device[:3] == 'cuda') else "cpu")
+    device = torch.device(args.device if (torch.cuda.is_available() and args.device.startswith("cuda")) else "cpu")
     
     # For training subset.
     psf_convolve(data_path=args.data_path, subset="train", 

@@ -5,7 +5,6 @@ import sys
 import argparse
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 sys.path.append(os.path.abspath(os.getcwd()+'/../..'))

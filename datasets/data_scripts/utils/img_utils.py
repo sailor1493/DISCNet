@@ -2,8 +2,6 @@
 
 #### Library imports
 import numpy as np
-from IPython.core import debugger
-breakpoint = debugger.set_trace
 
 #### Local imports
 
