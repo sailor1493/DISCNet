@@ -18,6 +18,70 @@ from basicsr.utils import (MessageLogger, check_resume, get_env_info,
                            make_exp_dirs, mkdir_and_rename, set_random_seed)
 from basicsr.utils.options import dict2str, parse
 
+def scandir(dir_path, suffix=None, recursive=False, full_path=False):
+    """Scan a directory to find the interested files.
+
+    Args:
+        dir_path (str): Path of the directory.
+        suffix (str | tuple(str), optional): File suffix that we are
+            interested in. Default: None.
+        recursive (bool, optional): If set to True, recursively scan the
+            directory. Default: False.
+        full_path (bool, optional): If set to True, include the dir_path.
+            Default: False.
+
+    Returns:
+        A generator for all the interested files with relative paths.
+    """
+
+    if (suffix is not None) and not isinstance(suffix, (str, tuple)):
+        raise TypeError('"suffix" must be a string or tuple of strings')
+
+    root = dir_path
+
+    def _scandir(dir_path, suffix, recursive):
+        for entry in os.scandir(dir_path):
+            if not entry.name.startswith('.') and entry.is_file():
+                if full_path:
+                    return_path = entry.path
+                else:
+                    return_path = osp.relpath(entry.path, root)
+
+                if suffix is None:
+                    yield return_path
+                elif return_path.endswith(suffix):
+                    yield return_path
+            else:
+                if recursive:
+                    yield from _scandir(entry.path, suffix=suffix, recursive=recursive)
+                else:
+                    continue
+
+    return _scandir(dir_path, suffix=suffix, recursive=recursive)
+
+
+def load_resume_state(opt):
+    resume_state_path = None
+    if opt['auto_resume']:
+        state_path = osp.join('experiments', opt['name'], 'training_states')
+        if osp.isdir(state_path):
+            states = list(scandir(state_path, suffix='state', recursive=False, full_path=False))
+            if len(states) != 0:
+                states = [float(v.split('.state')[0]) for v in states]
+                resume_state_path = osp.join(state_path, f'{max(states):.0f}.state')
+                opt['path']['resume_state'] = resume_state_path
+    else:
+        if opt['path'].get('resume_state'):
+            resume_state_path = opt['path']['resume_state']
+
+    if resume_state_path is None:
+        resume_state = None
+    else:
+        device_id = torch.cuda.current_device()
+        resume_state = torch.load(resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
+        check_resume(opt, resume_state['iter'])
+    return resume_state
+
 
 def main():
     # options
@@ -33,6 +97,7 @@ def main():
         default='none',
         help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument("--auto_resume", action="store_true", default=False)
     args = parser.parse_args()
     opt = parse(args.opt, is_train=True)
 
@@ -50,19 +115,16 @@ def main():
     rank, world_size = get_dist_info()
     opt['rank'] = rank
     opt['world_size'] = world_size
+    opt['auto_resume'] = args.auto_resume
 
     # load resume states if exists
-    if opt['path'].get('resume_state'):
-        device_id = torch.cuda.current_device()
-        resume_state = torch.load(
-            opt['path']['resume_state'],
-            map_location=lambda storage, loc: storage.cuda(device_id))
-    else:
-        resume_state = None
-
-    # mkdir and loggers
+    resume_state = load_resume_state(opt)
+    # mkdir for experiments and logger
     if resume_state is None:
         make_exp_dirs(opt)
+        if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name'] and opt['rank'] == 0:
+            mkdir_and_rename(osp.join(opt['root_path'], 'tb_logger', opt['name']))
+
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
     logger = get_root_logger(

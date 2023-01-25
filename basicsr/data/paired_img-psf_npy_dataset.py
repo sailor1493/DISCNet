@@ -84,6 +84,8 @@ class PairedImgPSFNpyDataset(data.Dataset):
         else:
             return x
         
+    # I suppose 4-channeled SIT will still work with this dataloader.
+    # Other parts in the code will be examined further...
     def __getitem__(self, index):
         if self.file_client is None:
             self.file_client = FileClient(

@@ -156,7 +156,7 @@ def multiple_random_crop(img_gts, img_lqs, img_atns, gt_patch_size, scale, gt_pa
         img_atns = img_atns[0]
     return img_gts, img_lqs, img_atns
 
-
+# random_crop will not make problem even if input channel augments into 4
 def random_crop(img, patch_size):
     """random crop.
 
@@ -268,8 +268,10 @@ def totensor(imgs, bgr2rgb=True, float32=True):
             one element, just return tensor.
     """
 
+    # numpy h * w * c -> torch.tensor(c * h * w)
     def _totensor(img, bgr2rgb, float32):
         if img.shape[2] == 3 and bgr2rgb:
+            # this part will not run when we give 4-channeled input
             img = mmcv.bgr2rgb(img)
         img = torch.from_numpy(img.transpose(2, 0, 1))
         if float32:
