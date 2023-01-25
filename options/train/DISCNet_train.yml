@@ -20,41 +20,41 @@ datasets:
       type: npy
     folders:
       rot_1:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_1/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_1_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_1/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_1_train.txt
       rot_2:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_2/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_2_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_2/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_2_train.txt
       rot_3:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_3/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_3_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_3/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_3_train.txt
       rot_4:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_4/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_4_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_4/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_4_train.txt
       rot_5:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_5/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_5_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_5/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_5_train.txt
       rot_6:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_6/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_6_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_6/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_6_train.txt
       rot_7:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_7/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_7_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_7/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_7_train.txt
       rot_8:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_8/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_8_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_8/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_8_train.txt
       rot_9:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_9/train/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/train/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_9_train.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_9/train/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/train/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_9_train.txt
 
     gt_size: 256
     use_flip: false
@@ -77,9 +77,9 @@ datasets:
       type: npy
     folders:
       rot_5:
-        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/input/ZTE_new_5/test/
-        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/synthetic_data/GT/test/
-        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/datasets/PSF/kernel_info_list/ZTE_new/ZTE_new_code_5_test.txt
+        dataroot_lq: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/input/ZTE_new_5/test/
+        dataroot_gt: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/synthetic_data/GT/test/
+        meta_info_file: /home/n5/chanwoo/udc/baselines/DISCNet/feng-data/PSF/kernel_info_list/ZTE_new/ZTE_new_code_5_test.txt
 
 # network structures
 network_g:
@@ -140,8 +140,16 @@ val:
   metrics:
     psnr: # metric name, can be arbitrary
       type: calculate_psnr
-      crop_border: 0
+      crop_border: 4
       test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 4
+      test_y_channel: false
+    # lpips: # metric name, can be arbitrary
+    #   type: calculate_lpips
+    #   crop_border: 4
+    #   test_y_channel: false
 
 # logging settings
 logger:
