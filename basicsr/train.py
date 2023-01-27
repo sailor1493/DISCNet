@@ -120,6 +120,7 @@ def main():
     # load resume states if exists
     resume_state = load_resume_state(opt)
     # mkdir for experiments and logger
+    opt['root_path'] = opt.get("root_path", ".")
     if resume_state is None:
         make_exp_dirs(opt)
         if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name'] and opt['rank'] == 0:

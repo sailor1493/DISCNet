@@ -106,8 +106,6 @@ class DISCNet(nn.Module):
                 ResBlock(4 * nf, res_scale=res_scale, act_type=act_type),
                 conv_block(4 * nf, 4 * nf * (kpn_sz ** 2), kernel_size=1))
 
-    self.previous_parameter = None
-
     def forward(self, x, psf=None):
         if not self.training:
             N, C, H, W = x.shape
@@ -137,8 +135,6 @@ class DISCNet(nn.Module):
                 dynamic_kernel1 = self.dynamic_kernel1(kfea1)
                 dynamic_kernel2 = self.dynamic_kernel2(kfea2)
             dynamic_kernel = self.dynamic_kernel(kfea3)
-
-            print(self.kconv_11._modules['0'].__dict__)
 
         #############################
         # Restoration Branch
