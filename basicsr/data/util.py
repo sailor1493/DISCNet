@@ -204,7 +204,7 @@ def paired_paths_from_meta_info_file(folders, keys, meta_info_file,
 
 
 def paired_paths_PSF_from_meta_info_file(folders, keys, meta_info_file,
-                                     filename_tmpl):
+                                         filename_tmpl):
     """Generate paired paths from an meta information file.
 
     Each line in the meta information file contains the image names and
@@ -239,7 +239,7 @@ def paired_paths_PSF_from_meta_info_file(folders, keys, meta_info_file,
     input_key, gt_key = keys
 
     with open(meta_info_file, 'r') as fin:
-        pair_names = [line[:-2].split(' ') for line in fin]
+        pair_names = [line.strip().split(' ') for line in fin]
 
     paths = []
     for gt_name, psf_path in pair_names:
@@ -255,7 +255,7 @@ def paired_paths_PSF_from_meta_info_file(folders, keys, meta_info_file,
 
 
 def multiple_paths_from_meta_info_file(folders, keys, meta_info_file,
-                                     filename_tmpl):
+                                       filename_tmpl):
     """Generate paired paths from an meta information file.
 
     Each line in the meta information file contains the image names and
