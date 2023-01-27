@@ -2,7 +2,8 @@ import argparse
 import datetime
 import logging
 import math
-import os, pdb
+import os
+import pdb
 import random
 import time
 import torch
@@ -86,7 +87,6 @@ def load_resume_state(opt):
 def main():
     # options
     os.environ["WANDB_MODE"] = "dryrun"
-
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -233,6 +233,8 @@ def main():
     else:
         raise ValueError(f'Wrong prefetch_mode {prefetch_mode}.'
                          "Supported ones are: None, 'cuda', 'cpu'.")
+
+    # torchinfo.summary(model.net_g, (8, 3, 256, 256))
 
     # training
     logger.info(
