@@ -80,10 +80,6 @@ def main():
     # create model
     model = create_model(opt)
 
-    dummy_input = torch.zeros((1, 3, 800, 800)).to(model.device)
-    dummy_psf = torch.zeros((1, 5, 1, 1)).to(model.device)
-    summary(model.net_g, dummy_input, dummy_psf)
-
     for test_loader in test_loaders:
         test_set_name = test_loader.dataset.opt['name']
         mkdir_or_exist(osp.join(opt['path']['visualization'], test_set_name))

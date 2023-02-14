@@ -214,6 +214,7 @@ class PerceptualLoss(nn.Module):
             gt = (gt + 1.) * 0.5
 
         # extract vgg features
+        # error: yet we cannot make 4-channeled vgg: it is tremendously expensive
         x_features = self.vgg(x)
         gt_features = self.vgg(gt.detach())
 

@@ -85,7 +85,7 @@ class VGGFeatureExtractor(nn.Module):
         super(VGGFeatureExtractor, self).__init__()
 
         self.layer_name_list = layer_name_list
-        self.use_input_norm = use_input_norm
+        self.use_input_norm = False
 
         self.names = NAMES[vgg_type.replace('_bn', '')]
         if 'bn' in vgg_type:

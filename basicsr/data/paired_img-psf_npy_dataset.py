@@ -61,11 +61,10 @@ class PairedImgPSFNpyDataset(data.Dataset):
             gt_folder, lq_folder = folder_opt['dataroot_gt'], folder_opt['dataroot_lq']
 
             self.paths += paired_paths_PSF_from_meta_info_file(
-                            [lq_folder, gt_folder], ['lq', 'gt'],
-                            folder_opt['meta_info_file'], self.filename_tmpl)
+                [lq_folder, gt_folder], ['lq', 'gt'],
+                folder_opt['meta_info_file'], self.filename_tmpl)
 
-
-    def _tonemap(self, x, type='simple'):
+    def _tonemap(self, x, type='simple', range=1023.):
         if type == 'mu_law':
             norm_x = x / x.max()
             mapped_x = np.log(1 + 10000 * norm_x) / np.log(1 + 10000)
@@ -73,17 +72,20 @@ class PairedImgPSFNpyDataset(data.Dataset):
             mapped_x = x / (x + 0.25)
         elif type == 'same':
             mapped_x = x
+        elif type == "norm":
+            mapped_x = x / range
         else:
-            raise NotImplementedError('tone mapping type [{:s}] is not recognized.'.format(type))
+            raise NotImplementedError(
+                'tone mapping type [{:s}] is not recognized.'.format(type))
         return mapped_x
 
     def _expand_dim(self, x):
         # expand dimemsion if images are gray.
         if x.ndim == 2:
-            return x[:,:,None]
+            return x[:, :, None]
         else:
             return x
-        
+
     # I suppose 4-channeled SIT will still work with this dataloader.
     # Other parts in the code will be examined further...
     def __getitem__(self, index):
@@ -94,6 +96,9 @@ class PairedImgPSFNpyDataset(data.Dataset):
         scale = self.opt['scale']
         lq_map_type = self.opt['lq_map_type']
         gt_map_type = self.opt['gt_map_type']
+        lq_map_range = self.opt.get("lq_map_range")
+        gt_map_range = self.opt.get("gt_map_range")
+        order = self.opt.get("order")
 
         crop_scale = self.opt.get('crop_scale', None)
 
@@ -106,9 +111,14 @@ class PairedImgPSFNpyDataset(data.Dataset):
         img_lq = self.file_client.get(lq_path)
         psf_code = self.file_client.get(psf_path)
 
+        # if cwh, transform to hwc
+        if order == "cwh":
+            img_lq = img_lq.transpose(2, 1, 0)
+            img_gt = img_gt.transpose(2, 1, 0)
+
         # tone mapping
-        img_lq = self._tonemap(img_lq, type=lq_map_type)
-        img_gt = self._tonemap(img_gt, type=gt_map_type)
+        img_lq = self._tonemap(img_lq, type=lq_map_type, range=lq_map_range)
+        img_gt = self._tonemap(img_gt, type=gt_map_type, range=gt_map_range)
 
         # expand dimension
         img_gt = self._expand_dim(img_gt)
@@ -132,9 +142,9 @@ class PairedImgPSFNpyDataset(data.Dataset):
             img_gt, img_lq = augment([img_gt, img_lq], self.opt['use_flip'],
                                      self.opt['use_rot'])
 
-        # TODO: color space transform
         # BGR to RGB, HWC to CHW, numpy to tensor
-        img_gt, img_lq = totensor([img_gt, img_lq], bgr2rgb=False, float32=True)
+        img_gt, img_lq = totensor(
+            [img_gt, img_lq], bgr2rgb=False, float32=True)
         psf_code = torch.from_numpy(psf_code)[..., None, None]
 
         return {

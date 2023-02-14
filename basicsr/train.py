@@ -19,6 +19,7 @@ from basicsr.utils import (MessageLogger, check_resume, get_env_info,
                            make_exp_dirs, mkdir_and_rename, set_random_seed)
 from basicsr.utils.options import dict2str, parse
 
+
 def scandir(dir_path, suffix=None, recursive=False, full_path=False):
     """Scan a directory to find the interested files.
 
@@ -66,10 +67,12 @@ def load_resume_state(opt):
     if opt['auto_resume']:
         state_path = osp.join('experiments', opt['name'], 'training_states')
         if osp.isdir(state_path):
-            states = list(scandir(state_path, suffix='state', recursive=False, full_path=False))
+            states = list(scandir(state_path, suffix='state',
+                          recursive=False, full_path=False))
             if len(states) != 0:
                 states = [float(v.split('.state')[0]) for v in states]
-                resume_state_path = osp.join(state_path, f'{max(states):.0f}.state')
+                resume_state_path = osp.join(
+                    state_path, f'{max(states):.0f}.state')
                 opt['path']['resume_state'] = resume_state_path
     else:
         if opt['path'].get('resume_state'):
@@ -79,7 +82,8 @@ def load_resume_state(opt):
         resume_state = None
     else:
         device_id = torch.cuda.current_device()
-        resume_state = torch.load(resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
+        resume_state = torch.load(
+            resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
         check_resume(opt, resume_state['iter'])
     return resume_state
 
@@ -124,7 +128,8 @@ def main():
     if resume_state is None:
         make_exp_dirs(opt)
         if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name'] and opt['rank'] == 0:
-            mkdir_and_rename(osp.join(opt['root_path'], 'tb_logger', opt['name']))
+            mkdir_and_rename(
+                osp.join(opt['root_path'], 'tb_logger', opt['name']))
 
     log_file = osp.join(opt['path']['log'],
                         f"train_{opt['name']}_{get_time_str()}.log")
@@ -277,6 +282,8 @@ def main():
             # validation
             if opt['val']['val_freq'] is not None and current_iter % opt[
                     'val']['val_freq'] == 0:
+                model.validation(train_loader, current_iter,
+                                 tb_logger, False)
                 model.validation(val_loader, current_iter, tb_logger,
                                  opt['val']['save_img'])
 

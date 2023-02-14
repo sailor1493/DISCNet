@@ -6,6 +6,9 @@ from collections import OrderedDict
 from copy import deepcopy
 from os import path as osp
 import numpy as np
+import rawpy as rp
+import imageio
+import os
 
 from basicsr.models import networks as networks
 from basicsr.models.base_model import BaseModel
@@ -104,6 +107,7 @@ class PSFResModel(BaseModel):
             l_total += l_pix
             loss_dict['l_pix'] = l_pix
         # perceptual loss
+        # here: we call vgg19 here for feature extraction, and then calculate loss
         if self.cri_perceptual:
             l_percep, l_style = self.cri_perceptual(self.output, self.gt)
             if l_percep is not None:
@@ -122,7 +126,7 @@ class PSFResModel(BaseModel):
         self.net_g.eval()
         with torch.no_grad():
             N, C, H, W = self.lq.shape
-            if H > 2000 or W > 2000:
+            if H > 1000 or W > 1000:
                 self.output = self.test_crop9()
             else:
                 self.output = self.net_g(self.lq, self.psf_code)
@@ -130,17 +134,26 @@ class PSFResModel(BaseModel):
 
     def test_crop9(self):
         N, C, H, W = self.lq.shape
-        h, w = math.ceil(H/3), math.ceil(W/3)
+        h, w = math.ceil(H / 3), math.ceil(W / 3)
         rf = 30
-        imTL = self.net_g(self.lq[:, :, 0:h+rf,      0:w+rf], self.psf_code)[:, :, 0:h, 0:w]
-        imML = self.net_g(self.lq[:, :, h-rf:2*h+rf, 0:w+rf], self.psf_code)[:, :, rf:(rf+h), 0:w]
-        imBL = self.net_g(self.lq[:, :, 2*h-rf:,     0:w+rf], self.psf_code)[:, :, rf:, 0:w]
-        imTM = self.net_g(self.lq[:, :, 0:h+rf,      w-rf:2*w+rf], self.psf_code)[:, :, 0:h, rf:(rf+w)]
-        imMM = self.net_g(self.lq[:, :, h-rf:2*h+rf, w-rf:2*w+rf], self.psf_code)[:, :, rf:(rf+h), rf:(rf+w)]
-        imBM = self.net_g(self.lq[:, :, 2*h-rf:,     w-rf:2*w+rf], self.psf_code)[:, :, rf:, rf:(rf+w)]
-        imTR = self.net_g(self.lq[:, :, 0:h+rf,      2*w-rf:], self.psf_code)[:, :, 0:h, rf:]
-        imMR = self.net_g(self.lq[:, :, h-rf:2*h+rf, 2*w-rf:], self.psf_code)[:, :, rf:(rf+h), rf:]
-        imBR = self.net_g(self.lq[:, :, 2*h-rf:,     2*w-rf:], self.psf_code)[:, :, rf:, rf:]
+        imTL = self.net_g(
+            self.lq[:, :, 0:h + rf, 0:w + rf], self.psf_code)[:, :, 0:h, 0:w]
+        imML = self.net_g(self.lq[:, :, h - rf:2 * h + rf,
+                          0:w + rf], self.psf_code)[:, :, rf:(rf + h), 0:w]
+        imBL = self.net_g(
+            self.lq[:, :, 2 * h - rf:, 0:w + rf], self.psf_code)[:, :, rf:, 0:w]
+        imTM = self.net_g(
+            self.lq[:, :, 0:h + rf, w - rf:2 * w + rf], self.psf_code)[:, :, 0:h, rf:(rf + w)]
+        imMM = self.net_g(self.lq[:, :, h - rf:2 * h + rf, w - rf:2 *
+                          w + rf], self.psf_code)[:, :, rf:(rf + h), rf:(rf + w)]
+        imBM = self.net_g(
+            self.lq[:, :, 2 * h - rf:, w - rf:2 * w + rf], self.psf_code)[:, :, rf:, rf:(rf + w)]
+        imTR = self.net_g(
+            self.lq[:, :, 0:h + rf, 2 * w - rf:], self.psf_code)[:, :, 0:h, rf:]
+        imMR = self.net_g(self.lq[:, :, h - rf:2 * h + rf,
+                          2 * w - rf:], self.psf_code)[:, :, rf:(rf + h), rf:]
+        imBR = self.net_g(
+            self.lq[:, :, 2 * h - rf:, 2 * w - rf:], self.psf_code)[:, :, rf:, rf:]
 
         imT = torch.cat((imTL, imTM, imTR), 3)
         imM = torch.cat((imML, imMM, imMR), 3)
@@ -151,10 +164,51 @@ class PSFResModel(BaseModel):
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img):
         logger = get_root_logger()
         logger.info('Only support single GPU validation.')
-        self.nondist_validation(dataloader, current_iter, tb_logger, save_img)
+        if self.opt.get("rank", 0) == 0:
+            self.nondist_validation(
+                dataloader, current_iter, tb_logger, save_img)
 
     def nondist_validation(self, dataloader, current_iter, tb_logger,
                            save_img):
+
+        def _clamp(tensor, clamp_opts):
+            if clamp_opts:
+                return torch.clamp(tensor, clamp_opts["min"], clamp_opts["max"])
+            return tensor
+
+        def _save_4ch_npy_to_img(img_npy, img_path, dng_info, in_pxl=255., max_pxl=1023.):
+            if dng_info is None:
+                raise RuntimeError(
+                    "DNG information for saving 4 channeled npy file not provided")
+            # npy file in hwc manner to cwh manner
+            data = rp.imread(dng_info)
+            npy = img_npy.transpose(2, 1, 0) / in_pxl * max_pxl
+
+            GR = data.raw_image[0::2, 0::2]
+            R = data.raw_image[0::2, 1::2]
+            B = data.raw_image[1::2, 0::2]
+            GB = data.raw_image[1::2, 1::2]
+            GB[:, :] = 0
+            B[:, :] = 0
+            R[:, :] = 0
+            GR[:, :] = 0
+
+            w, h = npy.shape[1:]
+
+            GR[:w, :h] = npy[0][:w][:h]
+            R[:w, :h] = npy[1][:w][:h]
+            B[:w, :h] = npy[2][:w][:h]
+            GB[:w, :h] = npy[3][:w][:h]
+            newData = data.postprocess()
+            imageio.imsave(img_path, newData)
+
+        def _save_image(img_npy, img_path, max_pxl=1023., dng_info=None):
+            if img_npy.shape[2] == 3:
+                mmcv.imwrite(img_npy, img_path)
+            else:
+                _save_4ch_npy_to_img(
+                    img_npy, img_path, max_pxl=max_pxl, dng_info=dng_info)
+
         dataset_name = dataloader.dataset.opt['name']
         with_metrics = self.opt['val'].get('metrics') is not None
         if with_metrics:
@@ -164,15 +218,28 @@ class PSFResModel(BaseModel):
             }
         pbar = ProgressBar(len(dataloader))
 
+        clamp_opts = self.opt['val'].get("clamp")
+        dng_info = self.opt["val"].get("dng_info")
+        max_pxl = self.opt["val"].get("max_pxl", 1023.)
+
+        if save_img and not self.opt["is_train"]:
+            img_dirpath = osp.join(
+                self.opt['path']['visualization'], dataset_name)
+            os.makedirs(img_dirpath, exist_ok=True)
+
         for idx, val_data in enumerate(dataloader):
             img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
             self.feed_data(val_data)
             self.test()
 
             visuals = self.get_current_visuals()
+
+            visuals["result"] = _clamp(visuals["result"], clamp_opts)
+
             sr_img = tensor2img([visuals['result']])
             if 'gt' in visuals:
                 # gt_img = tensor2raw([visuals['gt']]) # replace for raw data.
+                gt_img = _clamp(visuals["gt"], clamp_opts)
                 gt_img = tensor2img([visuals['gt']])
                 del self.gt
 
@@ -183,20 +250,21 @@ class PSFResModel(BaseModel):
 
             if save_img:
                 if self.opt['is_train']:
-                    save_img_path = osp.join(self.opt['path']['visualization'],
-                                             img_name,
-                                             f'{img_name}_{current_iter}.png')
+                    imgdir = osp.join(self.opt['path']['visualization'],
+                                      img_name)
+                    os.makedirs(imgdir, exist_ok=True)
+                    save_img_path = osp.join(
+                        imgdir, f'{img_name}_{current_iter}.png')
                 else:
-                    if self.opt['val']['suffix']:
+                    if self.opt['val'].get("suffix"):
                         save_img_path = osp.join(
-                            self.opt['path']['visualization'], dataset_name,
-                            f'{img_name}_{self.opt["val"]["suffix"]}.png')
+                            img_dirpath, f'{img_name}_{self.opt["val"]["suffix"]}.png')
                     else:
                         save_img_path = osp.join(
-                            self.opt['path']['visualization'], dataset_name,
-                            f'{img_name}.png')
+                            img_dirpath, f'{img_name}.png')
                 # np.save(save_img_path.replace('.png', '.npy'), sr_img) # replace for raw data.
-                mmcv.imwrite(sr_img, save_img_path)
+                _save_image(sr_img, save_img_path,
+                            max_pxl=max_pxl, dng_info=dng_info)
                 # mmcv.imwrite(gt_img, save_img_path.replace('syn_val', 'gt'))
 
             save_npy = self.opt['val'].get('save_npy', None)
@@ -215,7 +283,8 @@ class PSFResModel(BaseModel):
                             self.opt['path']['visualization'], dataset_name,
                             f'{img_name}.npy')
 
-                np.save(save_img_path, tensor2npy([visuals['result']])) # saving as .npy format.
+                # saving as .npy format.
+                np.save(save_img_path, tensor2npy([visuals['result']]))
 
             if with_metrics:
                 # calculate metrics
