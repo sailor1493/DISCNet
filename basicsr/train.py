@@ -101,7 +101,7 @@ def main():
         default='none',
         help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
-    parser.add_argument("--auto_resume", action="store_true", default=False)
+    parser.add_argument("--auto-resume", action="store_true", default=False)
     args = parser.parse_args()
     opt = parse(args.opt, is_train=True)
 

@@ -227,6 +227,9 @@ class PSFResModel(BaseModel):
                 self.opt['path']['visualization'], dataset_name)
             os.makedirs(img_dirpath, exist_ok=True)
 
+        logger = get_root_logger()
+        exp_name = self.opt["name"]
+
         for idx, val_data in enumerate(dataloader):
             img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
             self.feed_data(val_data)
@@ -242,6 +245,25 @@ class PSFResModel(BaseModel):
                 gt_img = _clamp(visuals["gt"], clamp_opts)
                 gt_img = tensor2img([visuals['gt']])
                 del self.gt
+
+            image_metric = {}
+            
+            if with_metrics:
+                # calculate metrics
+                opt_metric = deepcopy(self.opt['val']['metrics'])
+                for name, opt_ in opt_metric.items():
+                    metric_type = opt_.pop('type')
+                    # replace for raw data.
+                    # self.metric_results[name] += getattr(
+                    #     metric_module, metric_type)(sr_img*255, gt_img*255, **opt_)
+                    
+                    val = getattr(
+                        metric_module, metric_type)(sr_img, gt_img, **opt_)
+                    self.metric_results[name] += val
+                    image_metric[name] = val
+
+            metric_message = f"{img_name}_{image_metric.get('psnr', 0)}_{image_metric.get('ssim',0)}"
+            logger.info(metric_message)
 
             # tentative for out of GPU memory
             del self.lq
@@ -261,7 +283,7 @@ class PSFResModel(BaseModel):
                             img_dirpath, f'{img_name}_{self.opt["val"]["suffix"]}.png')
                     else:
                         save_img_path = osp.join(
-                            img_dirpath, f'{img_name}.png')
+                            img_dirpath, f'{metric_message}_{exp_name}.png')
                 # np.save(save_img_path.replace('.png', '.npy'), sr_img) # replace for raw data.
                 _save_image(sr_img, save_img_path,
                             max_pxl=max_pxl, dng_info=dng_info)
@@ -286,17 +308,6 @@ class PSFResModel(BaseModel):
                 # saving as .npy format.
                 np.save(save_img_path, tensor2npy([visuals['result']]))
 
-            if with_metrics:
-                # calculate metrics
-                opt_metric = deepcopy(self.opt['val']['metrics'])
-                for name, opt_ in opt_metric.items():
-                    metric_type = opt_.pop('type')
-                    # replace for raw data.
-                    # self.metric_results[name] += getattr(
-                    #     metric_module, metric_type)(sr_img*255, gt_img*255, **opt_)
-
-                    self.metric_results[name] += getattr(
-                        metric_module, metric_type)(sr_img, gt_img, **opt_)
             pbar.update(f'Test {img_name}')
 
         if with_metrics:
