@@ -449,3 +449,79 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
         gradients_penalty /= torch.mean(weight)
 
     return gradients_penalty
+
+
+
+class MSE_FFT(nn.Module):  # by kyusu
+    def __init__(self):
+        super(MSE_FFT, self).__init__()
+        self.fft_abs = FFT_abs_L1()
+        self.fft_angle = FFT_angle_L1()
+        self.l1 = L1Loss()
+
+    def forward(self, arg_input, arg_gt):
+        _input = arg_input
+        gt = arg_gt
+        loss_mse = self.l1(_input, gt)  # normalize해서 넣어야 함
+        loss_fft_abs = self.fft_abs(_input, gt)  # normalize 해서 넣어야 함
+        loss_fft_angle = self.fft_angle(_input, gt)  # normalize해서 넣어야 함
+        loss_total = loss_mse + loss_fft_abs + loss_fft_angle
+        return loss_total
+
+class MSE_FFT_abs(nn.Module):  # by kyusu
+    def __init__(self):
+        super(MSE_FFT_abs, self).__init__()
+        self.fft_abs = FFT_abs_L1()
+        self.l1 = L1Loss()
+
+    def forward(self, arg_input, arg_gt):
+        _input = arg_input
+        gt = arg_gt
+        loss_mse = self.l1(_input, gt)  # normalize해서 넣어야 함
+        loss_fft_abs = self.fft_abs(_input, gt)  # normalize 해서 넣어야 함
+        loss_total = loss_mse + loss_fft_abs
+        return loss_total
+
+class NoMSE(nn.Module):
+    def __init__(self):
+        super(NoMSE, self).__init__()
+        self.fft_abs = FFT_abs_L1()
+        self.fft_angle = FFT_angle_L1()
+
+    def forward(self, arg_input, arg_gt):
+        _input = arg_input
+        gt = arg_gt
+        loss_fft_abs = self.fft_abs(_input, gt)  # normalize 해서 넣어야 함
+        loss_fft_angle = self.fft_angle(_input, gt)  # normalize해서 넣어야 함
+        loss_total = loss_fft_abs + loss_fft_angle
+        return loss_total
+    
+
+
+class FFT_abs_L1(nn.Module):  # by kyusu
+    def __init__(self):
+        super(FFT_abs_L1, self).__init__()
+        self.criterion = torch.nn.L1Loss()
+
+    def forward(self, _input, _gt):
+        input_fft = abs(
+            torch.fft.fftn(_input, dim=(-2, -1))
+        )  # 0 ~ 1 사이로 NORM 된 애가 Input된 애여야 함
+        gt_fft = abs(torch.fft.fftn(_gt, dim=(-2, -1)))
+        loss_fft = self.criterion(input_fft, gt_fft)
+        return loss_fft
+
+
+
+class FFT_angle_L1(nn.Module):  # by kyusu
+    def __init__(self):
+        super(FFT_angle_L1, self).__init__()
+        self.criterion = torch.nn.L1Loss()
+
+    def forward(self, _input, _gt):
+        input_fft = torch.angle(
+            torch.fft.fftn(_input, dim=(-2, -1))
+        )  # 0 ~ 1 사이로 NORM 된 애가 Input된 애여야 함
+        gt_fft = torch.angle(torch.fft.fftn(_gt, dim=(-2, -1)))
+        loss_fft = self.criterion(input_fft, gt_fft)
+        return loss_fft

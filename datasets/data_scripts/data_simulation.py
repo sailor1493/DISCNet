@@ -49,9 +49,11 @@ def psf_convolve(data_path, subset='', psf_type='ZTE_new', device=torch.device('
         
         # Go through files in folder
         for file in tqdm(filenames):
+            #print("files:", file)
             # Load ground truth images
             img = np.load(os.path.join(in_path, file))
-            
+            #print('before:', np.max(img))
+                        
             # Pad or crop PSF if shape not the same as input image
             h, w, _ = img.shape
             pad_img = img_utils.pad_edges(img, (h + pad_size*2, w + pad_size*2))
@@ -59,6 +61,8 @@ def psf_convolve(data_path, subset='', psf_type='ZTE_new', device=torch.device('
             psf_matched = psf
             if psf_matched.shape[0] != pad_img.shape[0] or psf_matched.shape[1] != pad_img.shape[1]:
                 psf_matched = img_utils.match_dim(psf_matched, pad_img.shape[:2])
+                #psf_matched = np.clip((psf_matched * 5000), 0, 255) #/ 2550   #0.5 
+                #print(np.max(psf_matched))
             
             # FFT Convolution of image and PSF
             img_sim = np.zeros_like(img)
@@ -66,6 +70,7 @@ def psf_convolve(data_path, subset='', psf_type='ZTE_new', device=torch.device('
                 img_sim[..., c] = img_utils.center_crop(torch_utils.TorchFFTConv2d(torch.tensor(pad_img[..., c]).to(device),
                                         torch.tensor(psf_matched[..., c]).to(device)).numpy(), (h, w))
                 img_sim = np.clip(img_sim, a_min=0, a_max=500)
+                #print('after:', np.max(img_sim))
             # Save output numpy file
             np.save(os.path.join(out_path, file), img_sim)
 

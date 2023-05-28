@@ -39,7 +39,7 @@ def readEXR(filename, tonemap=False):
     
     colorChannels = ['R', 'G', 'B', 'A'] if 'A' in header['channels'] else ['R', 'G', 'B']
     img = np.concatenate([channelData[c][...,np.newaxis] for c in colorChannels], axis=2)
-    
+
     if tonemap:
         # linear to standard RGB
         img[..., :3] = np.where(img[..., :3] <= 0.0031308,

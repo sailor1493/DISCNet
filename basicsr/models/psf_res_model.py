@@ -9,10 +9,11 @@ import numpy as np
 import rawpy as rp
 import imageio
 import os
-
+from random import random
 from basicsr.models import networks as networks
 from basicsr.models.base_model import BaseModel
 from basicsr.utils import ProgressBar, get_root_logger, tensor2img, tensor2raw, tensor2npy
+import cv2
 
 loss_module = importlib.import_module('basicsr.models.losses')
 metric_module = importlib.import_module('basicsr.metrics')
@@ -200,7 +201,10 @@ class PSFResModel(BaseModel):
             B[:w, :h] = npy[2][:w][:h]
             GB[:w, :h] = npy[3][:w][:h]
             newData = data.postprocess()
-            imageio.imsave(img_path, newData)
+            start = (0, 464)  # (448 , 0) # 1792 1280 ->   3584, 2560
+            end = (3584, 3024)
+            output = newData[start[0] : end[0], start[1] : end[1]]
+            imageio.imsave(img_path, output)
 
         def _save_image(img_npy, img_path, max_pxl=1023., dng_info=None):
             if img_npy.shape[2] == 3:
@@ -229,6 +233,7 @@ class PSFResModel(BaseModel):
 
         logger = get_root_logger()
         exp_name = self.opt["name"]
+        save_img_ratio = self.opt["val"].get("save_img_ratio")
 
         for idx, val_data in enumerate(dataloader):
             img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
@@ -272,21 +277,24 @@ class PSFResModel(BaseModel):
 
             if save_img:
                 if self.opt['is_train']:
-                    imgdir = osp.join(self.opt['path']['visualization'],
-                                      img_name)
-                    os.makedirs(imgdir, exist_ok=True)
-                    save_img_path = osp.join(
-                        imgdir, f'{img_name}_{current_iter}.png')
+                    if random() < save_img_ratio:
+                        imgdir = osp.join(self.opt['path']['visualization'],
+                                        img_name)
+                        os.makedirs(imgdir, exist_ok=True)
+                        save_img_path = osp.join(
+                            imgdir, f'{img_name}_{current_iter}.png')
+                        _save_image(sr_img, save_img_path,
+                            max_pxl=max_pxl, dng_info=dng_info)
                 else:
                     if self.opt['val'].get("suffix"):
                         save_img_path = osp.join(
                             img_dirpath, f'{img_name}_{self.opt["val"]["suffix"]}.png')
                     else:
                         save_img_path = osp.join(
-                            img_dirpath, f'{metric_message}_{exp_name}.png')
+                            img_dirpath, f'{img_name}_{exp_name}.png')
                 # np.save(save_img_path.replace('.png', '.npy'), sr_img) # replace for raw data.
-                _save_image(sr_img, save_img_path,
-                            max_pxl=max_pxl, dng_info=dng_info)
+                    _save_image(sr_img, save_img_path,
+                                max_pxl=max_pxl, dng_info=dng_info)
                 # mmcv.imwrite(gt_img, save_img_path.replace('syn_val', 'gt'))
 
             save_npy = self.opt['val'].get('save_npy', None)
