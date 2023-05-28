@@ -7,22 +7,32 @@ from torch.nn import functional as F
 from basicsr.models.archs.vgg_arch import VGGFeatureExtractor
 from basicsr.models.losses.loss_utils import weighted_loss
 
-_reduction_modes = ['none', 'mean', 'sum']
+_reduction_modes = ["none", "mean", "sum"]
 
 
 @weighted_loss
 def l1_loss(pred, target):
-    return F.l1_loss(pred, target, reduction='none')
+    return F.l1_loss(pred, target, reduction="none")
 
 
 @weighted_loss
 def mse_loss(pred, target):
-    return F.mse_loss(pred, target, reduction='none')
+    return F.mse_loss(pred, target, reduction="none")
 
 
 @weighted_loss
 def charbonnier_loss(pred, target, eps=1e-12):
-    return torch.sqrt((pred - target)**2 + eps)
+    return torch.sqrt((pred - target) ** 2 + eps)
+
+
+class clamp_L1loss(nn.Module):
+    def __init__(self):
+        super(clamp_L1loss, self).__init__()
+
+    def forward(self, x, y):
+        x = torch.clamp(x, 0, 1)
+        y = torch.clamp(y, 0, 1)
+        return torch.mean(torch.abs(x - y))
 
 
 class L1Loss(nn.Module):
@@ -34,11 +44,13 @@ class L1Loss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean'):
+    def __init__(self, loss_weight=1.0, reduction="mean"):
         super(L1Loss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. '
-                             f'Supported ones are: {_reduction_modes}')
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. "
+                f"Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -52,7 +64,8 @@ class L1Loss(nn.Module):
                 weights. Default: None.
         """
         return self.loss_weight * l1_loss(
-            pred, target, weight, reduction=self.reduction)
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 class MSELoss(nn.Module):
@@ -64,11 +77,13 @@ class MSELoss(nn.Module):
             Supported choices are 'none' | 'mean' | 'sum'. Default: 'mean'.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean'):
+    def __init__(self, loss_weight=1.0, reduction="mean"):
         super(MSELoss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. '
-                             f'Supported ones are: {_reduction_modes}')
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. "
+                f"Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -82,7 +97,8 @@ class MSELoss(nn.Module):
                 weights. Default: None.
         """
         return self.loss_weight * mse_loss(
-            pred, target, weight, reduction=self.reduction)
+            pred, target, weight, reduction=self.reduction
+        )
 
 
 class CharbonnierLoss(nn.Module):
@@ -100,11 +116,13 @@ class CharbonnierLoss(nn.Module):
             Default: 1e-12.
     """
 
-    def __init__(self, loss_weight=1.0, reduction='mean', eps=1e-12):
+    def __init__(self, loss_weight=1.0, reduction="mean", eps=1e-12):
         super(CharbonnierLoss, self).__init__()
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f'Unsupported reduction mode: {reduction}. '
-                             f'Supported ones are: {_reduction_modes}')
+        if reduction not in ["none", "mean", "sum"]:
+            raise ValueError(
+                f"Unsupported reduction mode: {reduction}. "
+                f"Supported ones are: {_reduction_modes}"
+            )
 
         self.loss_weight = loss_weight
         self.reduction = reduction
@@ -119,14 +137,15 @@ class CharbonnierLoss(nn.Module):
                 weights. Default: None.
         """
         return self.loss_weight * charbonnier_loss(
-            pred, target, weight, eps=self.eps, reduction=self.reduction)
+            pred, target, weight, eps=self.eps, reduction=self.reduction
+        )
 
 
 class WeightedTVLoss(L1Loss):
     """Weighted TV loss.
 
-        Args:
-            loss_weight (float): Loss weight. Default: 1.0.
+    Args:
+        loss_weight (float): Loss weight. Default: 1.0.
     """
 
     def __init__(self, loss_weight=1.0):
@@ -134,9 +153,11 @@ class WeightedTVLoss(L1Loss):
 
     def forward(self, pred, weight=None):
         y_diff = super(WeightedTVLoss, self).forward(
-            pred[:, :, :-1, :], pred[:, :, 1:, :], weight=weight[:, :, :-1, :])
+            pred[:, :, :-1, :], pred[:, :, 1:, :], weight=weight[:, :, :-1, :]
+        )
         x_diff = super(WeightedTVLoss, self).forward(
-            pred[:, :, :, :-1], pred[:, :, :, 1:], weight=weight[:, :, :, :-1])
+            pred[:, :, :, :-1], pred[:, :, :, 1:], weight=weight[:, :, :, :-1]
+        )
 
         loss = x_diff + y_diff
 
@@ -169,14 +190,16 @@ class PerceptualLoss(nn.Module):
         criterion (str): Criterion used for perceptual loss. Default: 'l1'.
     """
 
-    def __init__(self,
-                 layer_weights,
-                 vgg_type='vgg19',
-                 use_input_norm=True,
-                 perceptual_weight=1.0,
-                 style_weight=0.,
-                 norm_img=False,
-                 criterion='l1'):
+    def __init__(
+        self,
+        layer_weights,
+        vgg_type="vgg19",
+        use_input_norm=True,
+        perceptual_weight=1.0,
+        style_weight=0.0,
+        norm_img=False,
+        criterion="l1",
+    ):
         super(PerceptualLoss, self).__init__()
         self.norm_img = norm_img
         self.perceptual_weight = perceptual_weight
@@ -185,18 +208,18 @@ class PerceptualLoss(nn.Module):
         self.vgg = VGGFeatureExtractor(
             layer_name_list=list(layer_weights.keys()),
             vgg_type=vgg_type,
-            use_input_norm=use_input_norm)
+            use_input_norm=use_input_norm,
+        )
 
         self.criterion_type = criterion
-        if self.criterion_type == 'l1':
+        if self.criterion_type == "l1":
             self.criterion = torch.nn.L1Loss()
-        elif self.criterion_type == 'l2':
+        elif self.criterion_type == "l2":
             self.criterion = torch.nn.L2loss()
-        elif self.criterion_type == 'fro':
+        elif self.criterion_type == "fro":
             self.criterion = None
         else:
-            raise NotImplementedError(
-                f'{criterion} criterion has not been supported.')
+            raise NotImplementedError(f"{criterion} criterion has not been supported.")
 
     def forward(self, x, gt):
         """Forward function.
@@ -210,8 +233,8 @@ class PerceptualLoss(nn.Module):
         """
 
         if self.norm_img:
-            x = (x + 1.) * 0.5
-            gt = (gt + 1.) * 0.5
+            x = (x + 1.0) * 0.5
+            gt = (gt + 1.0) * 0.5
 
         # extract vgg features
         # error: yet we cannot make 4-channeled vgg: it is tremendously expensive
@@ -222,13 +245,16 @@ class PerceptualLoss(nn.Module):
         if self.perceptual_weight > 0:
             percep_loss = 0
             for k in x_features.keys():
-                if self.criterion_type == 'fro':
-                    percep_loss += torch.norm(
-                        x_features[k] - gt_features[k],
-                        p='fro') * self.layer_weights[k]
+                if self.criterion_type == "fro":
+                    percep_loss += (
+                        torch.norm(x_features[k] - gt_features[k], p="fro")
+                        * self.layer_weights[k]
+                    )
                 else:
-                    percep_loss += self.criterion(
-                        x_features[k], gt_features[k]) * self.layer_weights[k]
+                    percep_loss += (
+                        self.criterion(x_features[k], gt_features[k])
+                        * self.layer_weights[k]
+                    )
             percep_loss *= self.perceptual_weight
         else:
             percep_loss = None
@@ -237,15 +263,23 @@ class PerceptualLoss(nn.Module):
         if self.style_weight > 0:
             style_loss = 0
             for k in x_features.keys():
-                if self.criterion_type == 'fro':
-                    style_loss += torch.norm(
-                        self._gram_mat(x_features[k]) -
-                        self._gram_mat(gt_features[k]),
-                        p='fro') * self.layer_weights[k]
+                if self.criterion_type == "fro":
+                    style_loss += (
+                        torch.norm(
+                            self._gram_mat(x_features[k])
+                            - self._gram_mat(gt_features[k]),
+                            p="fro",
+                        )
+                        * self.layer_weights[k]
+                    )
                 else:
-                    style_loss += self.criterion(
-                        self._gram_mat(x_features[k]),
-                        self._gram_mat(gt_features[k])) * self.layer_weights[k]
+                    style_loss += (
+                        self.criterion(
+                            self._gram_mat(x_features[k]),
+                            self._gram_mat(gt_features[k]),
+                        )
+                        * self.layer_weights[k]
+                    )
             style_loss *= self.style_weight
         else:
             style_loss = None
@@ -280,30 +314,27 @@ class GANLoss(nn.Module):
             for discriminators.
     """
 
-    def __init__(self,
-                 gan_type,
-                 real_label_val=1.0,
-                 fake_label_val=0.0,
-                 loss_weight=1.0):
+    def __init__(
+        self, gan_type, real_label_val=1.0, fake_label_val=0.0, loss_weight=1.0
+    ):
         super(GANLoss, self).__init__()
         self.gan_type = gan_type
         self.loss_weight = loss_weight
         self.real_label_val = real_label_val
         self.fake_label_val = fake_label_val
 
-        if self.gan_type == 'vanilla':
+        if self.gan_type == "vanilla":
             self.loss = nn.BCEWithLogitsLoss()
-        elif self.gan_type == 'lsgan':
+        elif self.gan_type == "lsgan":
             self.loss = nn.MSELoss()
-        elif self.gan_type == 'wgan':
+        elif self.gan_type == "wgan":
             self.loss = self._wgan_loss
-        elif self.gan_type == 'wgan_softplus':
+        elif self.gan_type == "wgan_softplus":
             self.loss = self._wgan_softplus_loss
-        elif self.gan_type == 'hinge':
+        elif self.gan_type == "hinge":
             self.loss = nn.ReLU()
         else:
-            raise NotImplementedError(
-                f'GAN type {self.gan_type} is not implemented.')
+            raise NotImplementedError(f"GAN type {self.gan_type} is not implemented.")
 
     def _wgan_loss(self, input, target):
         """wgan loss.
@@ -332,8 +363,7 @@ class GANLoss(nn.Module):
         Returns:
             Tensor: wgan loss.
         """
-        return F.softplus(-input).mean() if target else F.softplus(
-            input).mean()
+        return F.softplus(-input).mean() if target else F.softplus(input).mean()
 
     def get_target_label(self, input, target_is_real):
         """Get target label.
@@ -347,10 +377,9 @@ class GANLoss(nn.Module):
                 return Tensor.
         """
 
-        if self.gan_type in ['wgan', 'wgan_softplus']:
+        if self.gan_type in ["wgan", "wgan_softplus"]:
             return target_is_real
-        target_val = (
-            self.real_label_val if target_is_real else self.fake_label_val)
+        target_val = self.real_label_val if target_is_real else self.fake_label_val
         return input.new_ones(input.size()) * target_val
 
     def forward(self, input, target_is_real, is_disc=False):
@@ -366,7 +395,7 @@ class GANLoss(nn.Module):
             Tensor: GAN loss value.
         """
         target_label = self.get_target_label(input, target_is_real)
-        if self.gan_type == 'hinge':
+        if self.gan_type == "hinge":
             if is_disc:  # for discriminators in hinge-gan
                 input = -input if target_is_real else input
                 loss = self.loss(1 + input).mean()
@@ -381,31 +410,33 @@ class GANLoss(nn.Module):
 
 def r1_penalty(real_pred, real_img):
     """R1 regularization for discriminator. The core idea is to
-        penalize the gradient on real data alone: when the
-        generator distribution produces the true data distribution
-        and the discriminator is equal to 0 on the data manifold, the
-        gradient penalty ensures that the discriminator cannot create
-        a non-zero gradient orthogonal to the data manifold without
-        suffering a loss in the GAN game.
+    penalize the gradient on real data alone: when the
+    generator distribution produces the true data distribution
+    and the discriminator is equal to 0 on the data manifold, the
+    gradient penalty ensures that the discriminator cannot create
+    a non-zero gradient orthogonal to the data manifold without
+    suffering a loss in the GAN game.
 
-        Ref:
-        Eq. 9 in Which training methods for GANs do actually converge.
-        """
+    Ref:
+    Eq. 9 in Which training methods for GANs do actually converge.
+    """
     grad_real = autograd.grad(
-        outputs=real_pred.sum(), inputs=real_img, create_graph=True)[0]
+        outputs=real_pred.sum(), inputs=real_img, create_graph=True
+    )[0]
     grad_penalty = grad_real.pow(2).view(grad_real.shape[0], -1).sum(1).mean()
     return grad_penalty
 
 
 def g_path_regularize(fake_img, latents, mean_path_length, decay=0.01):
     noise = torch.randn_like(fake_img) / math.sqrt(
-        fake_img.shape[2] * fake_img.shape[3])
+        fake_img.shape[2] * fake_img.shape[3]
+    )
     grad = autograd.grad(
-        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True)[0]
+        outputs=(fake_img * noise).sum(), inputs=latents, create_graph=True
+    )[0]
     path_lengths = torch.sqrt(grad.pow(2).sum(2).mean(1))
 
-    path_mean = mean_path_length + decay * (
-        path_lengths.mean() - mean_path_length)
+    path_mean = mean_path_length + decay * (path_lengths.mean() - mean_path_length)
 
     path_penalty = (path_lengths - path_mean).pow(2).mean()
 
@@ -429,7 +460,7 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
     alpha = real_data.new_tensor(torch.rand(batch_size, 1, 1, 1))
 
     # interpolate between real_data and fake_data
-    interpolates = alpha * real_data + (1. - alpha) * fake_data
+    interpolates = alpha * real_data + (1.0 - alpha) * fake_data
     interpolates = autograd.Variable(interpolates, requires_grad=True)
 
     disc_interpolates = discriminator(interpolates)
@@ -439,17 +470,17 @@ def gradient_penalty_loss(discriminator, real_data, fake_data, weight=None):
         grad_outputs=torch.ones_like(disc_interpolates),
         create_graph=True,
         retain_graph=True,
-        only_inputs=True)[0]
+        only_inputs=True,
+    )[0]
 
     if weight is not None:
         gradients = gradients * weight
 
-    gradients_penalty = ((gradients.norm(2, dim=1) - 1)**2).mean()
+    gradients_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
     if weight is not None:
         gradients_penalty /= torch.mean(weight)
 
     return gradients_penalty
-
 
 
 class MSE_FFT(nn.Module):  # by kyusu
@@ -468,6 +499,7 @@ class MSE_FFT(nn.Module):  # by kyusu
         loss_total = loss_mse + loss_fft_abs + loss_fft_angle
         return loss_total
 
+
 class MSE_FFT_abs(nn.Module):  # by kyusu
     def __init__(self):
         super(MSE_FFT_abs, self).__init__()
@@ -482,6 +514,7 @@ class MSE_FFT_abs(nn.Module):  # by kyusu
         loss_total = loss_mse + loss_fft_abs
         return loss_total
 
+
 class NoMSE(nn.Module):
     def __init__(self):
         super(NoMSE, self).__init__()
@@ -495,7 +528,6 @@ class NoMSE(nn.Module):
         loss_fft_angle = self.fft_angle(_input, gt)  # normalize해서 넣어야 함
         loss_total = loss_fft_abs + loss_fft_angle
         return loss_total
-    
 
 
 class FFT_abs_L1(nn.Module):  # by kyusu
@@ -510,7 +542,6 @@ class FFT_abs_L1(nn.Module):  # by kyusu
         gt_fft = abs(torch.fft.fftn(_gt, dim=(-2, -1)))
         loss_fft = self.criterion(input_fft, gt_fft)
         return loss_fft
-
 
 
 class FFT_angle_L1(nn.Module):  # by kyusu
