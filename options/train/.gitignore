@@ -1,2 +1,3 @@
 *.yml
 !DISCNet_train.yml
+!ky-DISCNet-NoMSE.yml
