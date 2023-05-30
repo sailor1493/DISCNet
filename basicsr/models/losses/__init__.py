@@ -11,6 +11,7 @@ from .losses import (
     MSE_FFT,
     MSE_FFT_abs,
     NoMSE,
+    clamp_L1Loss,
 )
 
 __all__ = [

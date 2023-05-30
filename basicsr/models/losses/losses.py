@@ -25,9 +25,9 @@ def charbonnier_loss(pred, target, eps=1e-12):
     return torch.sqrt((pred - target) ** 2 + eps)
 
 
-class clamp_L1loss(nn.Module):
+class clamp_L1Loss(nn.Module):
     def __init__(self):
-        super(clamp_L1loss, self).__init__()
+        super(clamp_L1Loss, self).__init__()
 
     def forward(self, x, y):
         x = torch.clamp(x, 0, 1)
