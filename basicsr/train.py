@@ -342,7 +342,7 @@ def main():
                 opt["val"]["val_freq"] is not None
                 and current_iter % opt["val"]["val_freq"] == 0
             ):
-                model.validation(train_loader, current_iter, tb_logger, False)
+                # model.validation(train_loader, current_iter, tb_logger, False)
                 model.validation(
                     val_loader, current_iter, tb_logger, opt["val"]["save_img"]
                 )
